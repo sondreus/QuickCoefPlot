@@ -1,0 +1,258 @@
+#' QuickCoefPlot
+#'
+#' The QuickCoefPlot an easy interface for linear regression coefficient plots in R. This includes the option to request robust and clustered standard errors, automatic labeling, and easy selection of coefficients to plot. 
+#' Written by Sondre U. Solstad (ssolstad@princeton.edu) - Please cite my github: github.com/sondreus/QuickCoefPlot.
+#' 
+#' @param model Data frame in which all model variables are located. 
+#' @param iv.vars.names (Optional) Vector of desired independent variable names in table output (e.g. c("GDP per capita", "Population")). Defaults to values in "iv.vars" if none provided.
+#' @param plot.title (Optional) Specifies the title of the coefficient plot. Defaults to no title.
+#' @param xlim (Optional) Vector of limits on x-axis of plot. If none supplied, this is automatically selected by ggplot.
+#' @param include.only (Optional) Vector of coefficients by number to keep in the plot (e.g. c(1, 2, 6)). If none specified, defaults to all. 
+#' @param robust.se (Optional) If TRUE, returns robust standard errors calculated using a sandwich estimator from the "sandwich" package. Defaults to TRUE (i.e. robust rather than normal standard errors).
+#' @param cluster (Optional) Name of variable by which cluster-robust standard errors should be computed using the cluster.vcov command of the multiwayvcov package. If this variable is not in the model, a data frame common to both the model variables and the clustering variable must be supplied.
+#' @param cluster.vars.names (Optional) Desired name or label of clustering variable to be reported in table output (e.g. "Country" yields a note on the bottom of the table reading "Country-Clustered Standard Errors in Parenthesis"). If cluster specified but no "cluster.vars.names" provided, "Cluster-Robust Standard Errors in Parenthesis" is reported.
+#' @param colors.off (Optional) If TRUE turns off default color scheme (sky-blue if p > 0.1, blue if p < 0.1, dark blue if p < 0.05, and black if p < 0.01)
+#' @param plot.margin (Optional) Vector of plot margins in centimeters. Defaults to (1, 1, 1, 1).
+#' @param text.size (Optional) Text size for plot elements.
+#' @param hide.summary.lines (Optional) Vector of summary lines to hide in plot output. If none supplied, defaults to none.
+#' @param horserace (Optional) If TRUE Produces a table comparing t-statistics instead of a coefficient plot.
+#' @keywords lm coefplot robust.se robust cluster LS reg horse-race tstat regression 
+#' @export
+#' @examples
+#' Please see: github.com/sondreus/QuickCoefPlot
+
+QuickCoefPlot <- function(model, iv.vars.names, plot.title, include.only, robust.se, cluster, cluster.vars.names, plot.margin, colors.off, text.size, hide.summary.lines, xlim, horserace){
+  require(lmtest)
+  require(sandwich)
+
+  # Setting variable names:
+  if(missing(iv.vars.names)){
+    iv.vars.names <- rownames(coeftest(model))[2:length(model$coefficients)]
+  }
+  
+    
+  # Setting default:
+  t.stat <- FALSE
+  
+  # Switching if horse-race regression selected
+  if(!missing(horserace)){
+    if(horserace == TRUE){
+      t.stat <- TRUE    
+    }
+  }
+  
+  # Setting robust SE as default
+  robust <- TRUE
+  
+  # Checking if non-robust standard errors requested
+  if(!missing(robust.se)){
+    if(robust.se == FALSE){
+      robust <- FALSE
+    }
+  }
+  
+  cluster.se <- FALSE
+  # Checking if cluster standard errors requested
+  if(!missing(cluster)){
+    if(!is.null(cluster)){
+      cluster.se <- TRUE
+      
+      library(multiwayvcov, quietly = TRUE)
+      
+      # Setting cluster name:
+      cluster.vars.names <- cluster
+      if(!missing(cluster.vars.names)){
+        cluster.vars.names <- cluster.vars.names[1]
+      }
+    }
+  }
+  
+  # If robust standard errors requested, then:
+if(robust == TRUE & cluster.se == FALSE){
+  lines <- c(paste0("OLS Coefficient Estimates with 90 % and 95 % C.I.s based on robust S.E. "), paste0("\n (N = ",nobs(model), ", Adjusted R-Squared = ", round(summary(model)$adj.r.squared, 3), ")"))
+  
+  # Checking if clustered standard errors requested
+  } else if(cluster.se == TRUE) {
+    
+    lines <- c(paste0("OLS Coefficient Estimates with 90 % and 95 % C.I.s based on ", ifelse(missing(cluster.vars.names), "Clustered S.E. ", paste0(cluster.vars.names, "-clustered S.E. "))), paste0("\n (N = ",nobs(model), ", Adjusted R-Squared = ", round(summary(model)$adj.r.squared, 3), ")"))
+    
+   } else {
+  # If neither then:
+  lines <- c(paste0("OLS Coefficient Estimates with 90 % and 95 % C.I.s based on normal S.E. "), paste0("\n (N = ",nobs(model), ", Adjusted R-Squared = ", round(summary(model)$adj.r.squared, 3), ")"))
+  
+} 
+
+  # Setting plot title to default if not specified.
+  if(missing(plot.title)){
+    plot.title <- ""
+  }
+    
+  if(t.stat == FALSE){
+    
+    xlab <- paste(lines, collapse = " ") 
+    
+    if(!missing(hide.summary.lines)){
+      if(!is.null(hide.summary.lines)){
+        xlab <- paste(lines[-hide.summary.lines], collapse = " ")  
+      }
+    }
+  
+    # If horse-race not selected, extract standard error:
+    extract <- 2
+  } else {
+    
+    # If horse-race selected, extract t-value
+    extract <- 3
+    }
+    
+if(robust == TRUE & cluster.se == FALSE){
+      
+      # Calculating robust standard errors
+    se <- as.vector(as.numeric(coeftest(model, vcov = sandwich)[2:length(model$coefficients), extract])) 
+    
+
+    } else if(cluster.se == TRUE){
+
+      # Calculating clustered standard errors
+      
+      # Checking if in model matrix already
+      if(missing(data) & length(setdiff(cluster, colnames(model.matrix(model)))) == 1) {
+        vcov.cluster <- cluster.vcov(model, cluster = model.matrix(model)[, cluster])
+      } else {
+        if(missing(data)){
+          return("Error: Please specify a common data frame for your model and clustering variable")
+        } else {
+          vcov.cluster <- cluster.vcov(model, cluster = data[complete.cases(data[, c(all.vars(formula(model)), cluster)]), cluster])
+        }
+      }
+    se <- as.vector(as.numeric(coeftest(model, vcov. = vcov.cluster)[2:length(model$coefficients), extract]))
+
+        } else {
+      
+      # Calculating normal standard errors
+    se <- as.vector(coef(summary(model))[2:length(model$coefficients), extract])  
+    }
+    
+    
+    estimate <- as.vector(as.numeric(model$coefficients[2:length(model$coefficients)]))
+  
+if(t.stat == FALSE){
+      
+    # If horse-race not selected:
+      
+    ci95 <- qnorm(1 - 0.05 / 2)
+    ci90 <- qnorm(1 - 0.1 / 2)
+    
+    coef.plot <- cbind.data.frame(estimate, 
+                                  estimate + se*ci95, 
+                                  estimate - se*ci95,
+                                  estimate - se*ci90, 
+                                  estimate + se*ci90)
+    colnames(coef.plot) <- c("est", "top", "bot", "lower", "upper")
+    coef.plot$vars <- factor(iv.vars.names, levels = iv.vars.names[length(iv.vars.names):1]) 
+    
+    ylab <- ""
+    col <- "black"
+    
+    if(!missing(include.only)){
+      if(!is.null(include.only)){
+        coef.plot <- coef.plot[include.only, ]
+      }
+    }
+
+    coef.plot$alpha <- 0.975
+    coef.plot$alpha <- ifelse(coef.plot$est > 0 & coef.plot$lower > 0, 0.98, ifelse(coef.plot$est < 0 & coef.plot$upper < 0, 0.98, coef.plot$alpha)) 
+    coef.plot$alpha <- ifelse(coef.plot$est > 0 & coef.plot$bot > 0, 1, ifelse(coef.plot$est < 0 & coef.plot$top < 0, 1, coef.plot$alpha))
+    coef.plot$col <- coef.plot$alpha
+    if(!missing(colors.off)){
+      if(colors.off == TRUE){
+        coef.plot$alpha <- 1
+      }
+    }
+    
+    
+    require(ggplot2)
+    p <- ggplot(coef.plot, aes(x=vars, y=est, ymin=lower, ymax=upper))+coord_fixed(ratio=1) 
+    p <- p +geom_linerange(aes(color=col),size=1.2)+geom_point(aes(color=col),size=3)+
+      coord_flip() +
+      theme_bw() + ggtitle(plot.title) +
+      theme(legend.position="none") + scale_size_continuous() +
+      ylab(xlab) +
+      xlab(ylab) + geom_linerange(aes(x=vars, ymin=bot, ymax=top, color = col)) + geom_hline(yintercept = 0, linetype=2)+scale_colour_gradient(low = "#56B4E9", high = "black")
+    
+    # Adding plot margin
+    if(!missing(plot.margin)){
+      p <- p + theme(plot.margin = unit(plot.margin, "cm"))
+    } else {
+      p <- p+ theme(plot.margin = unit(c(1,1,1,1), "cm"))
+    }
+    
+    # Adding custom text size
+    if(!missing(text.size)){
+    p <- p+ theme(text = element_text(size=text.size), axis.text=element_text(size=text.size),axis.title=element_text(size=text.size), title = element_text(size=text.size))
+    }
+    
+    if(!missing(xlim)){
+      p <- p+ylim(min = xlim[1], max = xlim[2])
+    }
+    return(p)} 
+  
+  # If horserace selected
+else {
+    
+    lines[3] <- lines[2] 
+    lines[2] <- "\n Negative/Positive effects in blue/red. \n"
+    lines[1] <- ("t-values of OLS Coefficient Estimates based on robust S. E. ")
+    xlab <- paste(lines, collapse = " ") 
+    
+    if(!missing(hide.summary.lines)){
+      if(!is.null(hide.summary.lines)){
+        xlab <- paste(lines[-hide.summary.lines])  
+      }
+    }
+    
+      t.test <- se
+      estimate <- ifelse(estimate > 0, "red", "blue")
+    
+    coef.plot <- cbind.data.frame(estimate, t.test)
+    colnames(coef.plot) <- c("est", "t")
+    coef.plot$vars <- factor(iv.vars.names, levels = iv.vars.names[length(iv.vars.names):1]) 
+    
+    ylab <- ""
+    col <- "black"
+    
+    if(!missing(include.only)){
+      if(!is.null(include.only)){
+        coef.plot <- coef.plot[include.only, ]
+      }
+    }
+    
+    require(ggplot2)
+    p <- ggplot(coef.plot, aes(x=vars, y=t, col=est))+coord_fixed(ratio=1)
+    p <- p +geom_point(size=3)+
+      coord_flip() +
+      theme_bw() + ggtitle(plot.title) +
+      theme(legend.position="none") + scale_size_continuous() +
+      ylab(xlab) + scale_color_manual(values = c("blue", "red"))+theme(plot.margin = unit(c(0,1,0.2,0), "inch"))+
+      xlab(ylab)  # aspect.ratio = 0.8)  
+    
+    # Adding plot margin
+    if(!missing(plot.margin)){
+      p <- p + theme(plot.margin = unit(plot.margin, "cm"))
+    } else {
+      p <- p+ theme(plot.margin = unit(c(1,5,1,1), "cm"))
+    }
+    
+    # Adding custom text size
+    if(!missing(text.size)){
+      p <- p+ theme(text = element_text(size=text.size), axis.text=element_text(size=text.size),axis.title=element_text(size=text.size), title = element_text(size=text.size))
+    }
+    
+    if(!missing(xlim)){
+      p <- p+ylim(min = xlim[1], max = xlim[2])
+    }
+    return(p)  
+    
+  }
+  
+}
