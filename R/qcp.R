@@ -1,4 +1,4 @@
-#' QuickCoefPlot
+#' qcp (QuickCoefPlot)
 #'
 #' QuickCoefPlot is an easy interface for linear regression coefficient plots in R. This includes the option to request robust and clustered standard errors, automatic labeling, and easy selection of coefficients to plot. 
 #' Written by Sondre U. Solstad (ssolstad@princeton.edu) - Please cite my github: github.com/sondreus/QuickCoefPlot.
@@ -21,7 +21,7 @@
 #' @examples
 #' Please see: github.com/sondreus/QuickCoefPlot
 
-QuickCoefPlot <- function(model, iv.vars.names, plot.title, include.only, robust.se, cluster, cluster.vars.names, plot.margin, colors.off, text.size, hide.summary.lines, xlim, horserace){
+qcp <- function(model, iv.vars.names, plot.title, include.only, robust.se, cluster, cluster.vars.names, plot.margin, colors.off, text.size, hide.summary.lines, xlim, horserace){
   require(lmtest)
   require(sandwich)
 
