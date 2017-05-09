@@ -26,12 +26,30 @@ library(QuickCoefPlot)
 mydata <- readRDS("3d_example.RDS")
 
 # Use the QuickCoefPlot to produce a regression table     
-model <- lm(log_gdppc_mad ~ upop + polity2, data = mydata)
+model <- lm(log_gdppc_mad ~  polity2 + tropical + desert + soil + near_coast + year, data = mydata)
 
 QuickCoefPlot(model)
 ```
 
 ![](README_files/figure-markdown_github/unnamed-chunk-2-1.png)
+
+``` r
+QuickCoefPlot(model, robust.se = FALSE)
+```
+
+![](README_files/figure-markdown_github/unnamed-chunk-2-2.png)
+
+``` r
+QuickCoefPlot(model, boot.se = TRUE)
+```
+
+![](README_files/figure-markdown_github/unnamed-chunk-2-3.png)
+
+``` r
+QuickCoefPlot(model, boot.se = TRUE, boot.b = 1000, boot.plot.est = TRUE, legend.on = TRUE)
+```
+
+![](README_files/figure-markdown_github/unnamed-chunk-2-4.png)
 
 Arguments:
 ----------
@@ -47,7 +65,12 @@ Arguments:
 -   **robust.se** *(Optional)* If TRUE, returns robust standard errors calculated using a sandwich estimator from the "sandwich" package. Defaults to TRUE (i.e. robust rather than normal standard errors).
 -   **cluster** *(Optional)* Name of variable by which cluster-robust standard errors should be computed using the cluster.vcov command of the multiwayvcov package. If this variable is not in the model, a data frame common to both the model variables and the clustering variable must be supplied.
 -   **cluster.vars.names** *(Optional)* Desired name or label of clustering variable to be reported in table output (e.g. "Country" yields a note on the bottom of the table reading "Country-Clustered Standard Errors in Parenthesis"). If cluster specified but no "cluster.vars.names" provided, "Cluster-Robust Standard Errors in Parenthesis" is reported.
--   ***colors.off** *(Optional)\* If TRUE turns off default color scheme (sky-blue if p &gt; 0.1, blue if p &lt; 0.1, dark blue if p &lt; 0.05, and black if p &lt; 0.01)
+-   **boot.se** *(Optional)* If TRUE, calculates bootstrapped confidence intervals. Defaults to FALSE.
+-   **boot.b** *(Optional)* Integer specifying the number of bootstrap simulations to run. Defaults to 100.
+-   **boot.plot.est** *(Optional)* If TRUE, plots the bootstrap estimates semi-transparently on the coefficient plot. Defaults to FALSE.
+-   **plot.lines** *(Optional)* If FALSE, does not plot confidence intervals on the coefficient plot. Defaults to TRUE.
+-   **legend.on** *(Optional)* If TRUE turns on the plot legend. Defaults to FALSE.
+-   **colors.off** *(Optional)* If TRUE turns off default color scheme (sky-blue if p &gt; 0.1, blue if p &lt; 0.1, dark blue if p &lt; 0.05, and black if p &lt; 0.01)
 -   **plot.margin** *(Optional)* Vector of plot margins in centimeters. Defaults to (1, 1, 1, 1).
 -   **text.size** *(Optional)* Text size for plot elements.
 -   **hide.summary.lines** *(Optional)* Vector of summary lines to hide in plot output. If none supplied, defaults to none.

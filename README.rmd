@@ -41,7 +41,7 @@ QuickCoefPlot(model, robust.se = FALSE)
 
 QuickCoefPlot(model, boot.se = TRUE)
 
-QuickCoefPlot(model, boot.se = TRUE, boot.b = 1000, boot.plot.est = TRUE)
+QuickCoefPlot(model, boot.se = TRUE, boot.b = 1000, boot.plot.est = TRUE, legend.on = TRUE)
 
 ```
 

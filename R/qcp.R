@@ -248,7 +248,7 @@ qcp <- function(model, iv.vars.names, plot.title, include.only, robust.se, clust
     }
     
     # Checking if estimates to be plotted:
-    if(!missing(boot.plot.est) & boot.se == TRUE){
+    if(!missing(boot.plot.est) & boot == TRUE){
       if(boot.plot.est == TRUE){
         
         se <- as.data.frame(se)
@@ -287,9 +287,14 @@ qcp <- function(model, iv.vars.names, plot.title, include.only, robust.se, clust
     }
     
     # Checking if requested no lines (i.e. just estimates)    
-    if(!missing(plot.lines) & plot.lines == FALSE){
+    if(!missing(plot.lines)){
+      
       # Do not plot lines, else:
       
+      if(plot.lines != FALSE){
+        p <- p +geom_linerange(aes(color=col, ymin=lower, ymax=upper),size=1.2)+ geom_linerange(aes(x=vars, ymin=bot, ymax=top, color = col))
+        
+      }
     } else {
       
       # Plot lines

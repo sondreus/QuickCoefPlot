@@ -248,7 +248,7 @@ if(!missing(colors.off)){
 }
 
 # Checking if estimates to be plotted:
-if(!missing(boot.plot.est) & boot.se == TRUE){
+if(!missing(boot.plot.est) & boot == TRUE){
   if(boot.plot.est == TRUE){
  
     se <- as.data.frame(se)
@@ -287,10 +287,15 @@ if(!missing(boot.plot.est) & boot.se == TRUE){
     }
 
     # Checking if requested no lines (i.e. just estimates)    
-    if(!missing(plot.lines) & plot.lines == FALSE){
+    if(!missing(plot.lines)){
+  
       # Do not plot lines, else:
       
-    } else {
+      if(plot.lines != FALSE){
+      p <- p +geom_linerange(aes(color=col, ymin=lower, ymax=upper),size=1.2)+ geom_linerange(aes(x=vars, ymin=bot, ymax=top, color = col))
+        
+      }
+      } else {
       
       # Plot lines
       p <- p +geom_linerange(aes(color=col, ymin=lower, ymax=upper),size=1.2)+ geom_linerange(aes(x=vars, ymin=bot, ymax=top, color = col))
