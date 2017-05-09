@@ -2,11 +2,11 @@
 % Please edit documentation in R/qcp.R
 \name{qcp}
 \alias{qcp}
-\title{qcp (QuickCoefPlot)}
+\title{QuickCoefPlot (qcp)}
 \usage{
 qcp(model, iv.vars.names, plot.title, include.only, robust.se, cluster,
-  cluster.vars.names, plot.margin, colors.off, text.size, hide.summary.lines,
-  xlim, horserace)
+  cluster.vars.names, boot.se, boot.b, boot.plot.est, plot.lines, plot.margin,
+  legend.on, colors.off, text.size, hide.summary.lines, xlim, horserace)
 }
 \arguments{
 \item{model}{Data frame in which all model variables are located.}
@@ -23,9 +23,19 @@ qcp(model, iv.vars.names, plot.title, include.only, robust.se, cluster,
 
 \item{cluster.vars.names}{(Optional) Desired name or label of clustering variable to be reported in table output (e.g. "Country" yields a note on the bottom of the table reading "Country-Clustered Standard Errors in Parenthesis"). If cluster specified but no "cluster.vars.names" provided, "Cluster-Robust Standard Errors in Parenthesis" is reported.}
 
+\item{boot.se}{(Optional) If TRUE, calculates confidence interval based on bootstrap simulations. By default based on 100 such simulations, see boot.b below.}
+
+\item{boot.b}{(Optional) Integer specifying the number of bootstrap simulation to run if boot.se is set to TRUE. Defaults to 100.}
+
+\item{boot.plot.est}{(Optional) If TRUE, plots the bootstrap estimates semi-transparently on the coefficient plot. Defaults to FALSE.}
+
+\item{plot.lines}{(Optional) If FALSE, does not plot confidence intervals on the coefficient plot. Defaults to TRUE.}
+
 \item{plot.margin}{(Optional) Vector of plot margins in centimeters. Defaults to (1, 1, 1, 1).}
 
-\item{colors.off}{(Optional) If TRUE turns off default color scheme (sky-blue if p > 0.1, blue if p < 0.1, dark blue if p < 0.05, and black if p < 0.01)}
+\item{legend.on}{(Optional) If TRUE turns on the plot legend. Defaults to FALSE.}
+
+\item{colors.off}{(Optional) If TRUE turns off color scheme (sky-blue if p > 0.1, dark blue if p < 0.1, black if p < 0.05). Defaults to FALSE.}
 
 \item{text.size}{(Optional) Text size for plot elements.}
 
@@ -36,10 +46,11 @@ qcp(model, iv.vars.names, plot.title, include.only, robust.se, cluster,
 \item{horserace}{(Optional) If TRUE Produces a table comparing t-statistics instead of a coefficient plot.}
 }
 \description{
-QuickCoefPlot is an easy interface for linear regression coefficient plots in R. This includes the option to request robust and clustered standard errors, automatic labeling, and easy selection of coefficients to plot. 
+QuickCoefPlot (aka qcp) is an easy interface for linear regression coefficient plots in R. This includes the option to request robust and clustered standard errors, automatic labeling, and easy selection of coefficients to plot.
 Written by Sondre U. Solstad (ssolstad@princeton.edu) - Please cite my github: github.com/sondreus/QuickCoefPlot.
 }
 \examples{
+ 
 Please see: github.com/sondreus/QuickCoefPlot
 }
 \keyword{LS}

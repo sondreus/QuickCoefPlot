@@ -1,6 +1,6 @@
-#' qcp (QuickCoefPlot)
+#' QuickCoefPlot (qcp)
 #'
-#' QuickCoefPlot is an easy interface for linear regression coefficient plots in R. This includes the option to request robust and clustered standard errors, automatic labeling, and easy selection of coefficients to plot. 
+#' QuickCoefPlot (aka qcp) is an easy interface for linear regression coefficient plots in R. This includes the option to request robust and clustered standard errors, automatic labeling, and easy selection of coefficients to plot.
 #' Written by Sondre U. Solstad (ssolstad@princeton.edu) - Please cite my github: github.com/sondreus/QuickCoefPlot.
 #' 
 #' @param model Data frame in which all model variables are located. 
@@ -11,7 +11,12 @@
 #' @param robust.se (Optional) If TRUE, returns robust standard errors calculated using a sandwich estimator from the "sandwich" package. Defaults to TRUE (i.e. robust rather than normal standard errors).
 #' @param cluster (Optional) Name of variable by which cluster-robust standard errors should be computed using the cluster.vcov command of the multiwayvcov package. If this variable is not in the model, a data frame common to both the model variables and the clustering variable must be supplied.
 #' @param cluster.vars.names (Optional) Desired name or label of clustering variable to be reported in table output (e.g. "Country" yields a note on the bottom of the table reading "Country-Clustered Standard Errors in Parenthesis"). If cluster specified but no "cluster.vars.names" provided, "Cluster-Robust Standard Errors in Parenthesis" is reported.
-#' @param colors.off (Optional) If TRUE turns off default color scheme (sky-blue if p > 0.1, blue if p < 0.1, dark blue if p < 0.05, and black if p < 0.01)
+#' @param boot.se (Optional) If TRUE, calculates confidence interval based on bootstrap simulations. By default based on 100 such simulations, see boot.b below.
+#' @param boot.b (Optional) Integer specifying the number of bootstrap simulation to run if boot.se is set to TRUE. Defaults to 100.
+#' @param boot.plot.est (Optional) If TRUE, plots the bootstrap estimates semi-transparently on the coefficient plot. Defaults to FALSE. 
+#' @param plot.lines (Optional) If FALSE, does not plot confidence intervals on the coefficient plot. Defaults to TRUE.  
+#' @param legend.on (Optional) If TRUE turns on the plot legend. Defaults to FALSE.
+#' @param colors.off (Optional) If TRUE turns off color scheme (sky-blue if p > 0.1, dark blue if p < 0.1, black if p < 0.05). Defaults to FALSE.
 #' @param plot.margin (Optional) Vector of plot margins in centimeters. Defaults to (1, 1, 1, 1).
 #' @param text.size (Optional) Text size for plot elements.
 #' @param hide.summary.lines (Optional) Vector of summary lines to hide in plot output. If none supplied, defaults to none.
@@ -19,27 +24,18 @@
 #' @keywords lm coefplot robust.se robust cluster LS reg horse-race tstat regression 
 #' @export
 #' @examples
+#'  
 #' Please see: github.com/sondreus/QuickCoefPlot
 
-qcp <- function(model, iv.vars.names, plot.title, include.only, robust.se, cluster, cluster.vars.names, plot.margin, colors.off, text.size, hide.summary.lines, xlim, horserace){
+qcp <- function(model, iv.vars.names, plot.title, include.only, robust.se, cluster, cluster.vars.names, boot.se, boot.b, boot.plot.est, plot.lines, plot.margin, legend.on, colors.off, text.size, hide.summary.lines, xlim, horserace){
   require(lmtest)
   require(sandwich)
-
+  
   # Setting variable names:
   if(missing(iv.vars.names)){
     iv.vars.names <- rownames(coeftest(model))[2:length(model$coefficients)]
   }
   
-    
-  # Setting default:
-  t.stat <- FALSE
-  
-  # Switching if horse-race regression selected
-  if(!missing(horserace)){
-    if(horserace == TRUE){
-      t.stat <- TRUE    
-    }
-  }
   
   # Setting robust SE as default
   robust <- TRUE
@@ -50,6 +46,37 @@ qcp <- function(model, iv.vars.names, plot.title, include.only, robust.se, clust
       robust <- FALSE
     }
   }
+  
+  # Checking if boot-strapped standard errors requested
+  
+  # Setting default
+  boot <- FALSE
+  
+  if(!missing(boot.se)){
+    if(boot.se == TRUE){
+      boot <- TRUE
+      robust <- FALSE
+      
+      # Setting B (default is 100)
+      boot.b <- ifelse(missing(boot.b), 100, boot.b)
+    }
+  }
+  
+  
+  # Switching if horse-race regression selected
+  
+  # Setting default:
+  t.stat <- FALSE
+  
+  if(!missing(horserace)){
+    if(horserace == TRUE){
+      t.stat <- TRUE
+      
+      # (bootstrapping is not supported for horserace output)
+      boot <- FALSE
+    }
+  }
+  
   
   cluster.se <- FALSE
   # Checking if cluster standard errors requested
@@ -67,26 +94,35 @@ qcp <- function(model, iv.vars.names, plot.title, include.only, robust.se, clust
     }
   }
   
-  # If robust standard errors requested, then:
-if(robust == TRUE & cluster.se == FALSE){
-  lines <- c(paste0("OLS Coefficient Estimates with 90 % and 95 % C.I.s based on robust S.E. "), paste0("\n (N = ",nobs(model), ", Adjusted R-Squared = ", round(summary(model)$adj.r.squared, 3), ")"))
   
-  # Checking if clustered standard errors requested
-  } else if(cluster.se == TRUE) {
+  
+  # If robust standard errors requested, then:
+  if(robust == TRUE & cluster.se == FALSE & boot == FALSE){
+    lines <- c(paste0("OLS Coefficient Estimates with 90 % and 95 % C.I.s based on robust S.E. "), paste0("\n (N = ",nobs(model), ", Adjusted R-Squared = ", round(summary(model)$adj.r.squared, 3), ")"))
+    
+    
+    # Checking if clustered standard errors requested
+  } else if(cluster.se == TRUE & boot == FALSE) {
     
     lines <- c(paste0("OLS Coefficient Estimates with 90 % and 95 % C.I.s based on ", ifelse(missing(cluster.vars.names), "Clustered S.E. ", paste0(cluster.vars.names, "-clustered S.E. "))), paste0("\n (N = ",nobs(model), ", Adjusted R-Squared = ", round(summary(model)$adj.r.squared, 3), ")"))
     
-   } else {
-  # If neither then:
-  lines <- c(paste0("OLS Coefficient Estimates with 90 % and 95 % C.I.s based on normal S.E. "), paste0("\n (N = ",nobs(model), ", Adjusted R-Squared = ", round(summary(model)$adj.r.squared, 3), ")"))
+    
+    # Checking if boot-strapped standard errors requested 
+  } else if(boot == TRUE){
+    lines <- c(paste0("OLS Coefficient Estimates with 90 % and 95 % C.I.s based on ", boot.b, " Bootstrap Simulations"), paste0("\n (N = ",nobs(model), ", Adjusted R-Squared = ", round(summary(model)$adj.r.squared, 3), ")"))
+    
+  } else {
+    # If neither then:
+    lines <- c(paste0("OLS Coefficient Estimates with 90 % and 95 % C.I.s based on normal S.E. "), paste0("\n (N = ",nobs(model), ", Adjusted R-Squared = ", round(summary(model)$adj.r.squared, 3), ")"))
+    
+  } 
   
-} 
-
+  
   # Setting plot title to default if not specified.
   if(missing(plot.title)){
     plot.title <- ""
   }
-    
+  
   if(t.stat == FALSE){
     
     xlab <- paste(lines, collapse = " ") 
@@ -96,23 +132,36 @@ if(robust == TRUE & cluster.se == FALSE){
         xlab <- paste(lines[-hide.summary.lines], collapse = " ")  
       }
     }
-  
+    
     # If horse-race not selected, extract standard error:
     extract <- 2
   } else {
     
     # If horse-race selected, extract t-value
     extract <- 3
-    }
+  }
+  
+  
+  if(boot == TRUE){
     
-if(robust == TRUE & cluster.se == FALSE){
+    lm.data <- model.frame(model)
+    n.vars <- dim(lm.data)[2]
+    colnames(lm.data) <- paste0("var", 1:n.vars)
+    
+    se <-  t(sapply(1:boot.b, FUN = function(x) {coeftest(lm(as.formula(paste0("var1 ~ ", paste0("var", 2:n.vars, collapse = " + "))), data = lm.data[sample(1:nrow(lm.data), nrow(lm.data), replace = TRUE), ]))[2:n.vars, ifelse(extract == 2, 1, extract)]}))
+    
+    se <- apply(se,2,sort,decreasing=F)
+    
+  } else {
+    
+    if(robust == TRUE & cluster.se == FALSE){
       
       # Calculating robust standard errors
-    se <- as.vector(as.numeric(coeftest(model, vcov = sandwich)[2:length(model$coefficients), extract])) 
-    
-
+      se <- as.vector(as.numeric(coeftest(model, vcov = sandwich)[2:length(model$coefficients), extract])) 
+      
+      
     } else if(cluster.se == TRUE){
-
+      
       # Calculating clustered standard errors
       
       # Checking if in model matrix already
@@ -125,60 +174,136 @@ if(robust == TRUE & cluster.se == FALSE){
           vcov.cluster <- cluster.vcov(model, cluster = data[complete.cases(data[, c(all.vars(formula(model)), cluster)]), cluster])
         }
       }
-    se <- as.vector(as.numeric(coeftest(model, vcov. = vcov.cluster)[2:length(model$coefficients), extract]))
-
-        } else {
+      se <- as.vector(as.numeric(coeftest(model, vcov. = vcov.cluster)[2:length(model$coefficients), extract]))
+      
+    } else {
       
       # Calculating normal standard errors
-    se <- as.vector(coef(summary(model))[2:length(model$coefficients), extract])  
+      se <- as.vector(coef(summary(model))[2:length(model$coefficients), extract])  
     }
     
     
-    estimate <- as.vector(as.numeric(model$coefficients[2:length(model$coefficients)]))
+  }
   
-if(t.stat == FALSE){
-      
-    # If horse-race not selected:
-      
-    ci95 <- qnorm(1 - 0.05 / 2)
-    ci90 <- qnorm(1 - 0.1 / 2)
+  estimate <- as.vector(as.numeric(model$coefficients[2:length(model$coefficients)]))
+  
+  
+  if(t.stat == FALSE){
     
-    coef.plot <- cbind.data.frame(estimate, 
-                                  estimate + se*ci95, 
-                                  estimate - se*ci95,
-                                  estimate - se*ci90, 
-                                  estimate + se*ci90)
+    # If horse-race not selected:
+    
+    if(boot == FALSE){  
+      ci95 <- qnorm(1 - 0.05 / 2)
+      ci90 <- qnorm(1 - 0.1 / 2)
+      
+      coef.plot <- cbind.data.frame(estimate, 
+                                    estimate + se*ci95, 
+                                    estimate - se*ci95,
+                                    estimate - se*ci90, 
+                                    estimate + se*ci90)
+    } else {
+      
+      coef.plot <- cbind.data.frame(estimate, 
+                                    se[round(boot.b*0.975), ], 
+                                    se[max(1, round(boot.b*0.025)), ],
+                                    se[max(1, round(boot.b*0.025)), ], 
+                                    se[round(boot.b*0.950), ])
+    }
+    
+    
     colnames(coef.plot) <- c("est", "top", "bot", "lower", "upper")
     coef.plot$vars <- factor(iv.vars.names, levels = iv.vars.names[length(iv.vars.names):1]) 
     
     ylab <- ""
     col <- "black"
     
+    ## Checking if legend requested
+    
+    # Setting default
+    legend.position <- "none"
+    if(!missing(legend.on)){
+      if(legend.on == TRUE){
+        legend.position <- "bottom"
+      }
+    }
+    
+    ## Checking if only some variables to be reported
     if(!missing(include.only)){
       if(!is.null(include.only)){
         coef.plot <- coef.plot[include.only, ]
       }
     }
-
-    coef.plot$alpha <- 0.975
-    coef.plot$alpha <- ifelse(coef.plot$est > 0 & coef.plot$lower > 0, 0.98, ifelse(coef.plot$est < 0 & coef.plot$upper < 0, 0.98, coef.plot$alpha)) 
-    coef.plot$alpha <- ifelse(coef.plot$est > 0 & coef.plot$bot > 0, 1, ifelse(coef.plot$est < 0 & coef.plot$top < 0, 1, coef.plot$alpha))
-    coef.plot$col <- coef.plot$alpha
+    
+    coef.plot$col <- "p>0.1, "
+    coef.plot$col <- ifelse(coef.plot$est > 0 & coef.plot$lower > 0, "p<0.1, ", ifelse(coef.plot$est < 0 & coef.plot$upper < 0, "p<0.1, ", coef.plot$col)) 
+    coef.plot$col <- ifelse(coef.plot$est > 0 & coef.plot$bot > 0, "p<0.05, ", ifelse(coef.plot$est < 0 & coef.plot$top < 0, "p<0.05, ", coef.plot$col))
+    
     if(!missing(colors.off)){
       if(colors.off == TRUE){
-        coef.plot$alpha <- 1
+        coef.plot$col <- "p<0.05, "
+        
+        # Also turns off color-indicating legend
+        legend.position <- "none"
+      }
+    }
+    
+    # Checking if estimates to be plotted:
+    if(!missing(boot.plot.est) & boot.se == TRUE){
+      if(boot.plot.est == TRUE){
+        
+        se <- as.data.frame(se)
+        
+        if(!missing(include.only)){
+          if(!is.null(include.only)){
+            se <- se[, include.only]
+            iv.vars.names <- iv.vars.names[include.only]
+          }
+        }
+        
+        colnames(se) <- factor(iv.vars.names, levels = iv.vars.names[length(iv.vars.names):1])
+        
+        rownames(se) <- 1:nrow(se)
+        se.long <- reshape(se, 
+                           varying = colnames(se), 
+                           v.names = "est",
+                           timevar = "vars", 
+                           times = colnames(se), 
+                           direction = "long")  
+        rownames(se.long) <- 1:nrow(se.long)
+        
+        se.long <- merge(se.long, coef.plot[, c("vars", "col")], by = "vars")
+        
       }
     }
     
     
     require(ggplot2)
-    p <- ggplot(coef.plot, aes(x=vars, y=est, ymin=lower, ymax=upper))+coord_fixed(ratio=1) 
-    p <- p +geom_linerange(aes(color=col),size=1.2)+geom_point(aes(color=col),size=3)+
+    p <- ggplot(coef.plot, aes(x=vars, y=est))+coord_fixed(ratio=1) 
+    # Plotting boot estimates if requested
+    if(!missing(boot.plot.est)){
+      if(boot.plot.est == TRUE){
+        p <- p + geom_jitter(data = se.long, aes(x= vars, y = est, color=col), alpha = max(min(10/boot.b, 0.2), 0.21), width = .2/((dim(coef.plot)[2])))
+      }
+    }
+    
+    # Checking if requested no lines (i.e. just estimates)    
+    if(!missing(plot.lines) & plot.lines == FALSE){
+      # Do not plot lines, else:
+      
+    } else {
+      
+      # Plot lines
+      p <- p +geom_linerange(aes(color=col, ymin=lower, ymax=upper),size=1.2)+ geom_linerange(aes(x=vars, ymin=bot, ymax=top, color = col))
+      
+    }
+    
+    
+    p <- p+geom_point(aes(color=col),size=3)+
       coord_flip() +
       theme_bw() + ggtitle(plot.title) +
-      theme(legend.position="none") + scale_size_continuous() +
+      theme(legend.position=legend.position, legend.title = element_blank()) + scale_size_continuous() +
       ylab(xlab) +
-      xlab(ylab) + geom_linerange(aes(x=vars, ymin=bot, ymax=top, color = col)) + geom_hline(yintercept = 0, linetype=2)+scale_colour_gradient(low = "#56B4E9", high = "black")
+      xlab(ylab)  + geom_hline(yintercept = 0, linetype=2)+scale_colour_manual(values = c("p>0.1, " = "skyblue", "p<0.1, " = "#0072B2", "p<0.05, " = "black"))
     
     # Adding plot margin
     if(!missing(plot.margin)){
@@ -189,7 +314,7 @@ if(t.stat == FALSE){
     
     # Adding custom text size
     if(!missing(text.size)){
-    p <- p+ theme(text = element_text(size=text.size), axis.text=element_text(size=text.size),axis.title=element_text(size=text.size), title = element_text(size=text.size))
+      p <- p+ theme(text = element_text(size=text.size), axis.text=element_text(size=text.size),axis.title=element_text(size=text.size), title = element_text(size=text.size))
     }
     
     if(!missing(xlim)){
@@ -198,7 +323,7 @@ if(t.stat == FALSE){
     return(p)} 
   
   # If horserace selected
-else {
+  else {
     
     lines[3] <- lines[2] 
     lines[2] <- "\n Negative/Positive effects in blue/red. \n"
@@ -211,8 +336,8 @@ else {
       }
     }
     
-      t.test <- se
-      estimate <- ifelse(estimate > 0, "red", "blue")
+    t.test <- se
+    estimate <- ifelse(estimate > 0, "red", "blue")
     
     coef.plot <- cbind.data.frame(estimate, t.test)
     colnames(coef.plot) <- c("est", "t")
@@ -256,3 +381,4 @@ else {
   }
   
 }
+
