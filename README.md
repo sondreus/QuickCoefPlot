@@ -5,7 +5,7 @@ Sondre U. Solstad
 Easy OLS Coefficient Plots with options in R
 ============================================
 
-QuickCoefPlot is an easy interface for linear regression coefficient plots in R. This includes the option to request robust and clustered standard errors, automatic labeling, and easy selection of coefficients to plot.
+QuickCoefPlot is an easy interface for linear regression coefficient plots in R. This includes the option to request robust, clustered, and bootstrapped standard errors, automatic labeling, and easy selection of coefficients to plot.
 
 Written by Sondre U. Solstad, Princeton University (<ssolstad@princeton.edu>). Send me an email if you find this package useful or want to suggest an improvement or feature.
 
@@ -46,7 +46,7 @@ QuickCoefPlot(model, boot.se = TRUE)
 ![](README_files/figure-markdown_github/unnamed-chunk-2-3.png)
 
 ``` r
-QuickCoefPlot(model, boot.se = TRUE, boot.b = 1000, boot.plot.est = TRUE, legend.on = TRUE)
+QuickCoefPlot(model, boot.se = TRUE, boot.b = 100, boot.plot.est = TRUE, legend.on = TRUE)
 ```
 
 ![](README_files/figure-markdown_github/unnamed-chunk-2-4.png)
@@ -54,11 +54,8 @@ QuickCoefPlot(model, boot.se = TRUE, boot.b = 1000, boot.plot.est = TRUE, legend
 Arguments:
 ----------
 
--   **data** - Data frame in which all model variables are located.
--   **iv.vars** - Vector of independent variable names in dataset (e.g. c("gdppc", "pop"))
--   **iv.vars.names** - *(Optional)* Vector of desired independent variable names in table output (e.g. c("GDP per capita", "Population")). Defaults to values in "iv.vars" if none provided.
--   \*\*model Data frame in which all model variables are located.
--   **iv.vars.names** *(Optional)* Vector of desired independent variable names in table output (e.g. c("GDP per capita", "Population")). Defaults to values in "iv.vars" if none provided.
+-   **model** - Fitted "lm" object (e.g. lm(x ~ y, data = mydata)).
+-   **iv.vars.names** - *(Optional)* Vector of desired independent variable names in plot output (e.g. c("GDP per capita", "Population")). Defaults to variables names if not provided.
 -   **plot.title** *(Optional)* Specifies the title of the coefficient plot. Defaults to no title.
 -   **xlim** *(Optional)* Vector of limits on x-axis of plot. If none supplied, this is automatically selected by ggplot.
 -   \*\*include.only *(Optional)* Vector of coefficients by number to keep in the plot (e.g. c(1, 2, 6)). If none specified, defaults to all.
@@ -74,4 +71,4 @@ Arguments:
 -   **plot.margin** *(Optional)* Vector of plot margins in centimeters. Defaults to (1, 1, 1, 1).
 -   **text.size** *(Optional)* Text size for plot elements.
 -   **hide.summary.lines** *(Optional)* Vector of summary lines to hide in plot output. If none supplied, defaults to none.
--   **horserace** *(Optional)* If TRUE Produces a table comparing t-statistics instead of a coefficient plot.
+-   **horserace** *(Optional)* If TRUE produces a table comparing t-statistics instead of a coefficient plot.
