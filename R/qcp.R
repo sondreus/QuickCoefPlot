@@ -34,7 +34,14 @@ qcp <- function(model, iv.vars.names, plot.title, include.only, robust.se, clust
   # Setting variable names:
   if(missing(iv.vars.names)){
     iv.vars.names <- rownames(coeftest(model))[2:length(model$coefficients)]
+  } else if(length(iv.vars.names) < length(rownames(coeftest(model))[2:length(model$coefficients)])){
+    iv.vars.names[1:length(iv.vars.names)] <- iv.vars.names
+    
+    iv.vars.names[(length(iv.vars.names)+1):length(rownames(coeftest(model))[2:length(model$coefficients)])] <- rownames(coeftest(model))[(length(iv.vars.names)+2):length(model$coefficients)]
+  } else if(length(iv.vars.names) > length(rownames(coeftest(model))[2:length(model$coefficients)])){
+    iv.vars.names <- iv.vars.names[1:length(rownames(coeftest(model))[2:length(model$coefficients)])]
   }
+  
   
   
   # Setting robust SE as default
@@ -95,7 +102,6 @@ qcp <- function(model, iv.vars.names, plot.title, include.only, robust.se, clust
   }
   
   
-  
   # If robust standard errors requested, then:
   if(robust == TRUE & cluster.se == FALSE & boot == FALSE){
     lines <- c(paste0("OLS Coefficient Estimates with 90 % and 95 % C.I.s based on robust S.E. "), paste0("\n (N = ",nobs(model), ", Adjusted R-Squared = ", round(summary(model)$adj.r.squared, 3), ")"))
@@ -141,16 +147,36 @@ qcp <- function(model, iv.vars.names, plot.title, include.only, robust.se, clust
     extract <- 3
   }
   
-  
   if(boot == TRUE){
     
-    lm.data <- model.frame(model)
+    # Extracting model data
+    lm.data <- cbind.data.frame(model.frame(model)[, 1], model.matrix(model)[, -1])
     n.vars <- dim(lm.data)[2]
     colnames(lm.data) <- paste0("var", 1:n.vars)
     
-    se <-  t(sapply(1:boot.b, FUN = function(x) {coeftest(lm(as.formula(paste0("var1 ~ ", paste0("var", 2:n.vars, collapse = " + "))), data = lm.data[sample(1:nrow(lm.data), nrow(lm.data), replace = TRUE), ]))[2:n.vars, ifelse(extract == 2, 1, extract)]}))
+    se <- matrix(ncol = n.vars - 1, nrow = boot.b)
     
-    se <- apply(se,2,sort,decreasing=F)
+    # Fitting regressions and extracting coefficients
+    se <-  t(sapply(1:boot.b, FUN = function(x) {
+      
+      boot.sample <- coeftest(lm(as.formula(paste0("var1 ~ ", paste0("var", 2:n.vars, collapse = " + "))), data = lm.data[sample(1:nrow(lm.data), nrow(lm.data), replace = TRUE), ]))[-1, ifelse(extract == 2, 1, extract)]
+      
+      if(length(boot.sample) == (n.vars -1)){
+        return(boot.sample)
+        
+        # If some coefficients are missing, impute NA for these
+      } else {
+        
+        container <- data.frame(matrix(ncol= n.vars -1))
+        colnames(container) <- colnames(lm.data)[-1]
+        boot.sample <- data.frame(t(boot.sample))
+        boot.sample <- merge(container, boot.sample, all = TRUE)[ 1, paste0("var", 2:n.vars)]
+        return(setNames(as.numeric(boot.sample), colnames(boot.sample)))
+      }
+    }))
+    
+    # Sort coefficients in increasing order
+    se <- apply(se,2, FUN = function(x){sort(x ,decreasing=F, na.last=TRUE)})
     
   } else {
     
@@ -163,10 +189,14 @@ qcp <- function(model, iv.vars.names, plot.title, include.only, robust.se, clust
     } else if(cluster.se == TRUE){
       
       # Calculating clustered standard errors
+      library(multiwayvcov)
       
       # Checking if in model matrix already
-      if(missing(data) & length(setdiff(cluster, colnames(model.matrix(model)))) == 1) {
-        vcov.cluster <- cluster.vcov(model, cluster = model.matrix(model)[, cluster])
+      if(length(intersect(c(cluster, paste0("as.factor(", cluster, ")", collapse = "")), colnames(model.frame(model)))) == 1) { 
+        
+        vcov.cluster <- cluster.vcov(model, cluster = model.frame(model)[, intersect(c(cluster, paste0("as.factor(", cluster, ")", collapse = "")), colnames(model.frame(model)))])
+        
+        
       } else {
         if(missing(data)){
           return("Error: Please specify a common data frame for your model and clustering variable")
@@ -203,13 +233,28 @@ qcp <- function(model, iv.vars.names, plot.title, include.only, robust.se, clust
                                     estimate + se*ci90)
     } else {
       
+      
       coef.plot <- cbind.data.frame(estimate, 
                                     se[round(boot.b*0.975), ], 
                                     se[max(1, round(boot.b*0.025)), ],
-                                    se[max(1, round(boot.b*0.025)), ], 
+                                    se[max(1, round(boot.b*0.050)), ], 
                                     se[round(boot.b*0.950), ])
+      
+      # If we have missing coefficients, we need to account for the lower number in our confidence intervals:
+      
+      if(length(colnames(se)[colSums(is.na(se)) > 0]) != 0){
+        colnames(se) <- iv.vars.names
+        missing.coefs <- colnames(se)[colSums(is.na(se)) > 0]
+        
+        for (i in missing.coefs){
+          message(paste0("% Note: the variable '", colnames(se)[colSums(is.na(se)) > 0], "' has no observations in", " ", (summary(se[, i])[7])*100/boot.b, " percent of bootstrap samples", "\n"))
+          
+          coef.plot[match(i, colnames(se)), 2:5] <- c(se[round((boot.b-summary(se[, i])[7])*0.975)], se[max(1, round((boot.b-summary(se[, i])[7])*0.025))], se[max(1, round((boot.b-summary(se[, i])[7])*0.050))], se[round((boot.b-summary(se[, i])[7])*0.950)])                            
+        }
+        
+      }
+      
     }
-    
     
     colnames(coef.plot) <- c("est", "top", "bot", "lower", "upper")
     coef.plot$vars <- factor(iv.vars.names, levels = iv.vars.names[length(iv.vars.names):1]) 
@@ -247,7 +292,10 @@ qcp <- function(model, iv.vars.names, plot.title, include.only, robust.se, clust
       }
     }
     
+    
     # Checking if estimates to be plotted:
+    
+    
     if(!missing(boot.plot.est) & boot == TRUE){
       if(boot.plot.est == TRUE){
         
@@ -257,32 +305,42 @@ qcp <- function(model, iv.vars.names, plot.title, include.only, robust.se, clust
           if(!is.null(include.only)){
             se <- se[, include.only]
             iv.vars.names <- iv.vars.names[include.only]
+            
+            
           }
         }
         
-        colnames(se) <- factor(iv.vars.names, levels = iv.vars.names[length(iv.vars.names):1])
         
-        rownames(se) <- 1:nrow(se)
-        se.long <- reshape(se, 
-                           varying = colnames(se), 
-                           v.names = "est",
-                           timevar = "vars", 
-                           times = colnames(se), 
-                           direction = "long")  
-        rownames(se.long) <- 1:nrow(se.long)
-        
-        se.long <- merge(se.long, coef.plot[, c("vars", "col")], by = "vars")
-        
+        if(NCOL(se) == 1){
+          se.long <- cbind.data.frame(b.est = se, vars= iv.vars.names)
+          se.long <- merge(se.long, coef.plot[, c("vars", "col", "est")], by="vars")
+        } else {
+          
+          colnames(se) <- factor(iv.vars.names, levels = iv.vars.names[length(iv.vars.names):1])
+          
+          rownames(se) <- 1:nrow(se)
+          se.long <- reshape(se, 
+                             varying = colnames(se), 
+                             v.names = "b.est",
+                             timevar = "vars", 
+                             times = colnames(se), 
+                             direction = "long")  
+          rownames(se.long) <- 1:nrow(se.long)
+          
+          se.long <- merge(se.long, coef.plot[, c("vars", "col", "est")], by = "vars")
+        }
       }
     }
     
     
     require(ggplot2)
     p <- ggplot(coef.plot, aes(x=vars, y=est))+coord_fixed(ratio=1) 
+    
     # Plotting boot estimates if requested
     if(!missing(boot.plot.est)){
       if(boot.plot.est == TRUE){
-        p <- p + geom_jitter(data = se.long, aes(x= vars, y = est, color=col), alpha = max(min(10/boot.b, 0.2), 0.21), width = .2/((dim(coef.plot)[2])))
+        se.long$dist_from_est <- abs(abs(se.long$b.est)-abs(se.long$est))
+        p <- p + geom_jitter(data = se.long, aes(x= vars, y = b.est, color=col), alpha = max(min(10/boot.b, 0.2), 0.21), width =       0.5*pnorm(-se.long$dist_from_est/(NROW(coef.plot)+4), 0, 0.5*sd(se.long$dist_from_est, na.rm=TRUE)))
       }
     }
     
@@ -325,7 +383,7 @@ qcp <- function(model, iv.vars.names, plot.title, include.only, robust.se, clust
     if(!missing(xlim)){
       p <- p+ylim(min = xlim[1], max = xlim[2])
     }
-    return(p)} 
+    suppressWarnings(return(print(p)))} 
   
   # If horserace selected
   else {
