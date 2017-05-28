@@ -27,7 +27,7 @@
 #' 
 #' Please see: github.com/sondreus/QuickCoefPlot
 
-QuickCoefPlot <- function(model, iv.vars.names, plot.title, include.only, robust.se, cluster, cluster.vars.names, boot.se, boot.b, boot.plot.est, plot.lines, plot.margin, legend.on, colors.off, text.size, hide.summary.lines, xlim, horserace){
+QuickCoefPlot <- qcp <- function(model, iv.vars.names, plot.title, include.only, robust.se, cluster, cluster.vars.names, boot.se, boot.b, boot.plot.est, plot.lines, plot.margin, legend.on, colors.off, text.size, hide.summary.lines, xlim, horserace){
   require(lmtest)
   require(sandwich)
 
@@ -94,9 +94,10 @@ QuickCoefPlot <- function(model, iv.vars.names, plot.title, include.only, robust
       library(multiwayvcov, quietly = TRUE)
       
       # Setting cluster name:
-      cluster.vars.names <- cluster
       if(!missing(cluster.vars.names)){
         cluster.vars.names <- cluster.vars.names[1]
+      } else {
+      cluster.vars.names <- cluster[1]
       }
     }
   }
@@ -189,21 +190,13 @@ if(robust == TRUE & cluster.se == FALSE){
     } else if(cluster.se == TRUE){
 
       # Calculating clustered standard errors
-      library(multiwayvcov)
-      
-      # Checking if in model matrix already
-      if(length(intersect(c(cluster, paste0("as.factor(", cluster, ")", collapse = "")), colnames(model.frame(model)))) == 1) { 
+      library(multiwayvcov, quietly = FALSE)
         
-        vcov.cluster <- cluster.vcov(model, cluster = model.frame(model)[, intersect(c(cluster, paste0("as.factor(", cluster, ")", collapse = "")), colnames(model.frame(model)))])
+        vcov.cluster <- tryCatch(cluster.vcov(model, as.formula(paste("~ ", cluster))), error = function(x) {NULL})
         
-        
-        } else {
-        if(missing(data)){
-          return("Error: Please specify a common data frame for your model and clustering variable")
-        } else {
-          vcov.cluster <- cluster.vcov(model, cluster = data[complete.cases(data[, c(all.vars(formula(model)), cluster)]), cluster])
+        if(length(vcov.cluster) == 0){
+          return("Error: Please specify an accessible common data frame for your model and clustering variable(s)")
         }
-      }
     se <- as.vector(as.numeric(coeftest(model, vcov. = vcov.cluster)[2:length(model$coefficients), extract]))
 
         } else {
