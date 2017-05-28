@@ -3,7 +3,7 @@
 #' QuickCoefPlot (aka qcp) is an easy interface for linear regression coefficient plots in R. This includes the option to request robust and clustered standard errors, automatic labeling, and easy selection of coefficients to plot.
 #' Written by Sondre U. Solstad (ssolstad@princeton.edu) - Please cite my github: github.com/sondreus/QuickCoefPlot.
 #' 
-#' @param model Data frame in which all model variables are located. 
+#' @param model Fitted "lm" object.
 #' @param iv.vars.names (Optional) Vector of desired independent variable names in table output (e.g. c("GDP per capita", "Population")). Defaults to values in "iv.vars" if none provided.
 #' @param plot.title (Optional) Specifies the title of the coefficient plot. Defaults to no title.
 #' @param xlim (Optional) Vector of limits on x-axis of plot. If none supplied, this is automatically selected by ggplot.
@@ -195,7 +195,7 @@ if(robust == TRUE & cluster.se == FALSE){
         vcov.cluster <- tryCatch(cluster.vcov(model, as.formula(paste("~ ", cluster))), error = function(x) {NULL})
         
         if(length(vcov.cluster) == 0){
-          return("Error: Please specify an accessible common data frame for your model and clustering variable(s)")
+          return("Error: Model and clustering variables(s) must both be in accessible common data frame")
         }
     se <- as.vector(as.numeric(coeftest(model, vcov. = vcov.cluster)[2:length(model$coefficients), extract]))
 

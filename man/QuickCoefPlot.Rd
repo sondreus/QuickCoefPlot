@@ -10,7 +10,7 @@ QuickCoefPlot(model, iv.vars.names, plot.title, include.only, robust.se,
   horserace)
 }
 \arguments{
-\item{model}{Data frame in which all model variables are located.}
+\item{model}{Fitted "lm" object.}
 
 \item{iv.vars.names}{(Optional) Vector of desired independent variable names in table output (e.g. c("GDP per capita", "Population")). Defaults to values in "iv.vars" if none provided.}
 
