@@ -2,6 +2,7 @@
 % Please edit documentation in R/QuickCoefPlot.R
 \name{QuickCoefPlot}
 \alias{QuickCoefPlot}
+\alias{qcp}
 \title{QuickCoefPlot}
 \usage{
 QuickCoefPlot(model, iv.vars.names, plot.title, include.only, robust.se,
@@ -51,6 +52,9 @@ QuickCoefPlot (aka qcp) is an easy interface for linear regression coefficient p
 Written by Sondre U. Solstad (ssolstad@princeton.edu) - Please cite my github: github.com/sondreus/QuickCoefPlot.
 }
 \examples{
+
+QuickCoefPlot(lm(x ~y, data = mydata))
+qcp(lm(x ~ y, data = mydata, boot.se = TRUE, boot.plot.est = TRUE, legend.on = TRUE))
 
 Please see: github.com/sondreus/QuickCoefPlot
 }

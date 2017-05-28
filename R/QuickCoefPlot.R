@@ -22,8 +22,12 @@
 #' @param hide.summary.lines (Optional) Vector of summary lines to hide in plot output. If none supplied, defaults to none.
 #' @param horserace (Optional) If TRUE Produces a table comparing t-statistics instead of a coefficient plot.
 #' @keywords lm coefplot robust.se robust cluster LS reg horse-race tstat regression 
-#' @export
+#' @export QuickCoefPlot qcp
+#' @aliases qcp
 #' @examples
+#' 
+#' QuickCoefPlot(lm(x ~y, data = mydata))
+#' qcp(lm(x ~ y, data = mydata, boot.se = TRUE, boot.plot.est = TRUE, legend.on = TRUE))
 #' 
 #' Please see: github.com/sondreus/QuickCoefPlot
 
