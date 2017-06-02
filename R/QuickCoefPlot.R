@@ -117,8 +117,10 @@ QuickCoefPlot <- qcp <- function(model, iv.vars.names, plot.title, include.only,
    
     boot <- FALSE
     
-    if(boot.se == TRUE){
+    if(!missing(boot.se)){
+      if(boot.se == TRUE){
     message("Note: QuickCoefPlot does not yet support bootstrapping for GLM models - defaulting to regular standard errors.")
+    }
     }
     } else {
     return(print("Did not recognize model type - at present, QuickCoefPlot can only work with lm and glm objects (and the latter only experimentally)"))}
