@@ -107,24 +107,41 @@ QuickCoefPlot <- qcp <- function(model, iv.vars.names, plot.title, include.only,
   }
   
   
+  if(length(summary(model)$adj.r.squared) == 1){
+    model.summary.stat <- paste0(", Adjusted R-Squared = ", round(summary(model)$adj.r.squared, 3))
+    model.type <- "OLS"
+  } else {
+    if(length(summary(model)$aic == 1)){
+    model.summary.stat <- paste0(", AIC = ", round(model$aic, 3))
+    model.type <- "GLM" 
+   
+    boot <- FALSE
+    
+    message("Note: QuickCoefPlot does not yet support bootstrapping for GLM models - defaulting to regular standard errors.")
+    
+     } else {
+    return(print("Did not recognize model type - at present, QuickCoefPlot can only work with lm and glm objects (and the latter only experimentally)"))}
+    }
+  
+    
   # If robust standard errors requested, then:
 if(robust == TRUE & cluster.se == FALSE & boot == FALSE){
-  lines <- c(paste0("OLS Coefficient Estimates with 90 % and 95 % C.I.s based on robust S.E. "), paste0("\n (N = ",nobs(model), ", Adjusted R-Squared = ", round(summary(model)$adj.r.squared, 3), ")"))
+  lines <- c(paste0(model.type, " Coefficient Estimates with 90 % and 95 % C.I.s based on robust S.E. "), paste0("\n (N = ",nobs(model), model.summary.stat, ")"))
 
     
   # Checking if clustered standard errors requested
   } else if(cluster.se == TRUE & boot == FALSE) {
     
-    lines <- c(paste0("OLS Coefficient Estimates with 90 % and 95 % C.I.s based on ", ifelse(missing(cluster.vars.names), "Clustered S.E. ", paste0(cluster.vars.names, "-clustered S.E. "))), paste0("\n (N = ",nobs(model), ", Adjusted R-Squared = ", round(summary(model)$adj.r.squared, 3), ")"))
+    lines <- c(paste0(model.type, " Coefficient Estimates with 90 % and 95 % C.I.s based on ", ifelse(missing(cluster.vars.names), "Clustered S.E. ", paste0(cluster.vars.names, "-clustered S.E. "))), paste0("\n (N = ",nobs(model), model.summary.stat, ")"))
 
     
   # Checking if boot-strapped standard errors requested 
   } else if(boot == TRUE){
-    lines <- c(paste0("OLS Coefficient Estimates with 90 % and 95 % C.I.s based on ", boot.b, " Bootstrap Simulations"), paste0("\n (N = ",nobs(model), ", Adjusted R-Squared = ", round(summary(model)$adj.r.squared, 3), ")"))
+    lines <- c(paste0(model.type, " Coefficient Estimates with 90 % and 95 % C.I.s based on ", boot.b, " Bootstrap Simulations"), paste0("\n (N = ",nobs(model), model.summary.stat, ")"))
     
    } else {
   # If neither then:
-  lines <- c(paste0("OLS Coefficient Estimates with 90 % and 95 % C.I.s based on normal S.E. "), paste0("\n (N = ",nobs(model), ", Adjusted R-Squared = ", round(summary(model)$adj.r.squared, 3), ")"))
+  lines <- c(paste0(model.type, " Coefficient Estimates with 90 % and 95 % C.I.s based on normal S.E. "), paste0("\n (N = ",nobs(model), model.summary.stat, ")"))
   
 } 
   
