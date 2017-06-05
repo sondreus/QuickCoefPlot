@@ -21,7 +21,7 @@
 #' @param text.size (Optional) Text size for plot elements.
 #' @param hide.summary.lines (Optional) Vector of summary lines to hide in plot output. If none supplied, defaults to none.
 #' @param horserace (Optional) If TRUE Produces a table comparing t-statistics instead of a coefficient plot.
-#' @keywords lm coefplot robust.se robust cluster LS reg horse-race tstat regression 
+#' @keywords lm coefplot robust.se robust cluster LS reg horse-race tstat regression glm
 #' @export QuickCoefPlot qcp
 #' @aliases qcp
 #' @examples
@@ -115,13 +115,6 @@ QuickCoefPlot <- qcp <- function(model, iv.vars.names, plot.title, include.only,
     model.summary.stat <- paste0(", AIC = ", round(model$aic, 3))
     model.type <- "GLM" 
    
-    boot <- FALSE
-    
-    if(!missing(boot.se)){
-      if(boot.se == TRUE){
-    message("Note: QuickCoefPlot does not yet support bootstrapping for GLM models - defaulting to regular standard errors.")
-    }
-    }
     } else {
     return(print("Did not recognize model type - at present, QuickCoefPlot can only work with lm and glm objects (and the latter only experimentally)"))}
     }
@@ -175,16 +168,23 @@ if(robust == TRUE & cluster.se == FALSE & boot == FALSE){
   if(boot == TRUE){
     
     # Extracting model data
-    lm.data <- cbind.data.frame(model.frame(model)[, 1], model.matrix(model)[, -1])
-    n.vars <- dim(lm.data)[2]
-    colnames(lm.data) <- paste0("var", 1:n.vars)
-    
+    model.data <- cbind.data.frame(model.frame(model)[, 1], model.matrix(model)[, -1])
+    n.vars <- dim(model.data)[2]
+    colnames(model.data) <- paste0("var", 1:n.vars)
+
     se <- matrix(ncol = n.vars - 1, nrow = boot.b)
     
     # Fitting regressions and extracting coefficients
     se <-  t(sapply(1:boot.b, FUN = function(x) {
     
-    boot.sample <- coeftest(lm(as.formula(paste0("var1 ~ ", paste0("var", 2:n.vars, collapse = " + "))), data = lm.data[sample(1:nrow(lm.data), nrow(lm.data), replace = TRUE), ]))[-1, ifelse(extract == 2, 1, extract)]
+    if(model.type == "OLS"){  
+    boot.sample <- coeftest(lm(as.formula(paste0("var1 ~ ", paste0("var", 2:n.vars, collapse = " + "))), data = model.data[sample(1:nrow(model.data), nrow(model.data), replace = TRUE), ]))[-1, ifelse(extract == 2, 1, extract)]
+    } 
+    
+    if(model.type == "GLM"){
+    
+    boot.sample <- coeftest(glm(as.formula(paste0("var1 ~ ", paste0("var", 2:n.vars, collapse = " + "))), data = model.data[sample(1:nrow(model.data), nrow(model.data), replace = TRUE), ], family = model$family))[-1, ifelse(extract == 2, 1, extract)]  
+    }
     
     if(length(boot.sample) == (n.vars -1)){
       return(boot.sample)
@@ -193,7 +193,7 @@ if(robust == TRUE & cluster.se == FALSE & boot == FALSE){
     } else {
 
     container <- data.frame(matrix(ncol= n.vars -1))
-    colnames(container) <- colnames(lm.data)[-1]
+    colnames(container) <- colnames(model.data)[-1]
     boot.sample <- data.frame(t(boot.sample))
     boot.sample <- merge(container, boot.sample, all = TRUE)[ 1, paste0("var", 2:n.vars)]
     return(setNames(as.numeric(boot.sample), colnames(boot.sample)))
