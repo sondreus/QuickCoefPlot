@@ -344,7 +344,15 @@ if(!missing(boot.plot.est) & boot == TRUE){
                        direction = "long")  
     rownames(se.long) <- 1:nrow(se.long)
 
-    se.long <- merge(se.long, coef.plot[, c("vars", "col", "est")], by = "vars")
+    coef.plot$order <- 1:nrow(coef.plot)
+    se.long <- merge(se.long, coef.plot[, c("vars", "col", "est", "order")], by = "vars")
+    
+    # Ensuring ordering respected:
+    se.long <- se.long[order(se.long$order), ]
+    se.long$order <- NULL
+
+    se.long$vars <- as.character(se.long$vars)
+    se.long$vars <- factor(se.long$vars, levels=rev(unique(se.long$vars)))
       }
     }
 }
