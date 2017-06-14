@@ -35,6 +35,12 @@ QuickCoefPlot <- qcp <- function(model, iv.vars.names, plot.title, include.only,
   require(lmtest)
   require(sandwich)
 
+  
+# Checking if Zelig object, if so, transforming into fitted model object:
+if(grep("Zelig", class(model)[1]) == 1){
+        model <- from_zelig_model(model)
+}
+  
   # Setting variable names:
   if(missing(iv.vars.names)){
     iv.vars.names <- rownames(coeftest(model))[2:dim(coeftest(model))[1]]
@@ -107,37 +113,45 @@ QuickCoefPlot <- qcp <- function(model, iv.vars.names, plot.title, include.only,
   }
   
   
-  if(length(summary(model)$adj.r.squared) == 1){
+  if(class(model)[1] == "lm"){
     model.summary.stat <- paste0(", Adjusted R-Squared = ", round(summary(model)$adj.r.squared, 3))
     model.type <- "OLS"
-  } else {
-    if(length(summary(model)$aic == 1)){
+    model.description <- "OLS"
+  } else { if(class(model)[1] == "glm"){
     model.summary.stat <- paste0(", AIC = ", round(model$aic, 3))
+      
     model.type <- "GLM" 
-   
+    model.description <- "GLM"
+  } else { if(class(model)[2] == "glm"){
+      
+      model.type <- "GLM"
+      model.description <- class(model)[1]   
+      
+      model.summary.stat <- paste0(", AIC = ", round(model$aic, 3))
+     
     } else {
-    return(print("Did not recognize model type - at present, QuickCoefPlot can only work with lm and glm objects (and the latter only experimentally)"))}
+    return(print("Did not recognize model type - at present, QuickCoefPlot can only work with lm, glm and zelig objects (and the latter two only experimentally)"))}
     }
-  
+  }
     
   # If robust standard errors requested, then:
 if(robust == TRUE & cluster.se == FALSE & boot == FALSE){
-  lines <- c(paste0(model.type, " Coefficient Estimates with 90 % and 95 % C.I.s based on robust S.E. "), paste0("\n (N = ",nobs(model), model.summary.stat, ")"))
+  lines <- c(paste0(model.description, " Coefficient Estimates with 90 % and 95 % C.I.s based on robust S.E. "), paste0("\n (N = ",nobs(model), model.summary.stat, ")"))
 
     
   # Checking if clustered standard errors requested
   } else if(cluster.se == TRUE & boot == FALSE) {
     
-    lines <- c(paste0(model.type, " Coefficient Estimates with 90 % and 95 % C.I.s based on ", ifelse(missing(cluster.vars.names), "Clustered S.E. ", paste0(cluster.vars.names, "-clustered S.E. "))), paste0("\n (N = ",nobs(model), model.summary.stat, ")"))
+    lines <- c(paste0(model.description, " Coefficient Estimates with 90 % and 95 % C.I.s based on ", ifelse(missing(cluster.vars.names), "Clustered S.E. ", paste0(cluster.vars.names, "-clustered S.E. "))), paste0("\n (N = ",nobs(model), model.summary.stat, ")"))
 
     
   # Checking if boot-strapped standard errors requested 
   } else if(boot == TRUE){
-    lines <- c(paste0(model.type, " Coefficient Estimates with 90 % and 95 % C.I.s based on ", boot.b, " Bootstrap Simulations"), paste0("\n (N = ",nobs(model), model.summary.stat, ")"))
+    lines <- c(paste0(model.description, " Coefficient Estimates with 90 % and 95 % C.I.s based on ", boot.b, " Bootstrap Simulations"), paste0("\n (N = ",nobs(model), model.summary.stat, ")"))
     
    } else {
   # If neither then:
-  lines <- c(paste0(model.type, " Coefficient Estimates with 90 % and 95 % C.I.s based on normal S.E. "), paste0("\n (N = ",nobs(model), model.summary.stat, ")"))
+  lines <- c(paste0(model.description, " Coefficient Estimates with 90 % and 95 % C.I.s based on normal S.E. "), paste0("\n (N = ",nobs(model), model.summary.stat, ")"))
   
 } 
   
