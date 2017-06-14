@@ -44,6 +44,12 @@ QuickCoefPlot <- qcp <- function(model, iv.vars.names, plot.title, include.only,
 if(grep("Zelig", class(model)[1]) == 1){
         zelig <- TRUE
         zelig.model <- model$name
+        if(!missing(cluster)){
+          if(length(cluster) != 0){
+            zelig.data <- model$data            
+          }
+        }
+
         model <- from_zelig_model(model)
 }
   
@@ -249,8 +255,14 @@ if(robust == TRUE & cluster.se == FALSE){
       # Calculating clustered standard errors
       library(multiwayvcov, quietly = FALSE)
         
-        vcov.cluster <- tryCatch(cluster.vcov(model, as.formula(paste("~ ", paste(cluster, collapse = "+")))), error = function(x) {NULL})
+      if(zelig == TRUE){
         
+        vcov.cluster <- tryCatch(cluster.vcov(model, data[complete.cases(all.vars(formula(model))), cluster]), error = function(x) {NULL})
+        
+      } else {
+        vcov.cluster <- tryCatch(cluster.vcov(model, as.formula(paste("~ ", paste(cluster, collapse = "+")))), error = function(x) {NULL})
+      }
+      
         if(length(vcov.cluster) == 0){
           return("Error: Model and clustering variables(s) must both be in accessible common data frame")
         }
