@@ -216,7 +216,7 @@ if(robust == TRUE & cluster.se == FALSE){
       # Calculating clustered standard errors
       library(multiwayvcov, quietly = FALSE)
         
-        vcov.cluster <- tryCatch(cluster.vcov(model, as.formula(paste("~ ", cluster))), error = function(x) {NULL})
+        vcov.cluster <- tryCatch(cluster.vcov(model, as.formula(paste("~ ", paste(cluster, collapse = "+")))), error = function(x) {NULL})
         
         if(length(vcov.cluster) == 0){
           return("Error: Model and clustering variables(s) must both be in accessible common data frame")
@@ -264,7 +264,7 @@ if(length(colnames(se)[colSums(is.na(se)) > 0]) != 0){
   missing.coefs <- colnames(se)[colSums(is.na(se)) > 0]
   
   for (i in missing.coefs){
-  message(paste0("% Note: the variable '", colnames(se)[colSums(is.na(se)) > 0], "' has no observations in", " ", (summary(se[, i])[7])*100/boot.b, " percent of bootstrap samples", "\n"))
+  message(paste0("% Note: the variable '", i, "' has no observations in", " ", (summary(se[, i])[7])*100/boot.b, " percent of bootstrap samples", "\n"))
   
   coef.plot[match(i, colnames(se)), 2:5] <- c(se[round((boot.b-summary(se[, i])[7])*0.975)], se[max(1, round((boot.b-summary(se[, i])[7])*0.025))], se[max(1, round((boot.b-summary(se[, i])[7])*0.050))], se[round((boot.b-summary(se[, i])[7])*0.950)])                            
   }
