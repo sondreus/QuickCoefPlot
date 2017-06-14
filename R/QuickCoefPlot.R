@@ -36,8 +36,14 @@ QuickCoefPlot <- qcp <- function(model, iv.vars.names, plot.title, include.only,
   require(sandwich)
 
   
-# Checking if Zelig object, if so, transforming into fitted model object:
+# Checking if Zelig object, if so,  transforming into fitted model object:
+
+  # Setting default
+  zelig <- FALSE
+
 if(grep("Zelig", class(model)[1]) == 1){
+        zelig <- TRUE
+        zelig.model <- model$name
         model <- from_zelig_model(model)
 }
   
@@ -182,7 +188,16 @@ if(robust == TRUE & cluster.se == FALSE & boot == FALSE){
   if(boot == TRUE){
     
     # Extracting model data
+    if(zelig == TRUE){
+      if(length(model.frame(model)[1,1]) == 2){
+    model.data <- cbind.data.frame(model.frame(model)[, 1][, 1], model.matrix(model)[, -1])  
+      } else {
+      model.data <- cbind.data.frame(model.frame(model)[, 1], model.matrix(model)[, -1]) 
+      }
+    } else {
     model.data <- cbind.data.frame(model.frame(model)[, 1], model.matrix(model)[, -1])
+    }
+    
     n.vars <- dim(model.data)[2]
     colnames(model.data) <- paste0("var", 1:n.vars)
 
@@ -197,7 +212,11 @@ if(robust == TRUE & cluster.se == FALSE & boot == FALSE){
     
     if(model.type == "GLM"){
     
+    if(zelig == TRUE){
+    boot.sample <- coeftest(from_zelig_model(zelig(as.formula(paste0("var1 ~ ", paste0("var", 2:n.vars, collapse = " + "))), data = model.data[sample(1:nrow(model.data), nrow(model.data), replace = TRUE), ], model = zelig.model, cite = FALSE)))[-1, ifelse(extract == 2, 1, extract)]  
+    } else {
     boot.sample <- coeftest(glm(as.formula(paste0("var1 ~ ", paste0("var", 2:n.vars, collapse = " + "))), data = model.data[sample(1:nrow(model.data), nrow(model.data), replace = TRUE), ], family = model$family))[-1, ifelse(extract == 2, 1, extract)]  
+    }
     }
     
     if(length(boot.sample) == (n.vars -1)){
