@@ -41,7 +41,7 @@ QuickCoefPlot <- qcp <- function(model, iv.vars.names, plot.title, include.only,
   # Setting default
   zelig <- FALSE
 
-if(grep("Zelig", class(model)[1]) == 1){
+if(length(grep("Zelig", class(model)[1])) > 0){
         zelig <- TRUE
         zelig.model <- model$name
         if(!missing(cluster)){
