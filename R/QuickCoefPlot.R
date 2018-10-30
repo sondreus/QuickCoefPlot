@@ -22,6 +22,7 @@
 #' @param hide.summary.lines (Optional) Vector of summary lines to hide in plot output. If none supplied, defaults to none.
 #' @param add.summary.lines (Optional) Vector of summary lines to add to plot. If none supplied, defaults to none.
 #' @param horserace (Optional) If TRUE Produces a table comparing t-statistics instead of a coefficient plot.
+#' @param ... (Optional) arguments passed to ggplot's theme() function.
 #' @keywords lm coefplot robust.se robust cluster LS reg horse-race tstat regression glm
 #' @export QuickCoefPlot qcp
 #' @aliases qcp
@@ -32,7 +33,7 @@
 #'
 #' Please see: github.com/sondreus/QuickCoefPlot
 
-QuickCoefPlot <- qcp <- function(model, iv.vars.names, plot.title, include.only, robust.se, cluster, cluster.vars.names, boot.se, boot.b, boot.plot.est, plot.lines, plot.margin = c(0.5, 0.5, 0.5, 0.5), legend.on, colors.off, text.size, add.summary.lines, hide.summary.lines, xlim, horserace){
+QuickCoefPlot <- qcp <- function(model, iv.vars.names, plot.title, include.only, robust.se, cluster, cluster.vars.names, boot.se, boot.b, boot.plot.est, plot.lines, plot.margin = c(0.5, 0.5, 0.5, 0.5), legend.on, colors.off, text.size, add.summary.lines, hide.summary.lines, xlim, horserace, ...){
   require(lmtest)
   require(sandwich)
 
@@ -300,14 +301,23 @@ if(t.stat == FALSE){
                                   estimate + se*ci90)
   } else {
 
-
+if(is.null(dim(se))){ # Fixes if only one covariate
+  coef.plot <- cbind.data.frame(estimate,
+                                se[round(boot.b*0.975)],
+                                se[max(1, round(boot.b*0.025))],
+                                se[max(1, round(boot.b*0.050))],
+                                se[round(boot.b*0.950)])
+} else {
 coef.plot <- cbind.data.frame(estimate,
                              se[round(boot.b*0.975), ],
                              se[max(1, round(boot.b*0.025)), ],
                              se[max(1, round(boot.b*0.050)), ],
                              se[round(boot.b*0.950), ])
+}
 
 # If we have missing coefficients, we need to account for the lower number in our confidence intervals:
+
+if(!is.null(dim(se))){ # Ignores if only one covariate
 
 if(length(colnames(se)[colSums(is.na(se)) > 0]) != 0){
   colnames(se) <- iv.vars.names
@@ -319,6 +329,7 @@ if(length(colnames(se)[colSums(is.na(se)) > 0]) != 0){
   coef.plot[match(i, colnames(se)), 2:5] <- c(se[round((boot.b-summary(se[, i])[7])*0.975)], se[max(1, round((boot.b-summary(se[, i])[7])*0.025))], se[max(1, round((boot.b-summary(se[, i])[7])*0.050))], se[round((boot.b-summary(se[, i])[7])*0.950)])
   }
 
+}
 }
 
 }
@@ -439,7 +450,7 @@ if(!missing(boot.plot.est) & boot == TRUE){
     p <- p+geom_point(aes(color=col),size=3)+
       coord_flip() +
       theme_bw() + ggtitle(plot.title) +
-      theme(legend.position=legend.position, legend.title = element_blank()) + scale_size_continuous() +
+      theme(legend.position=legend.position, legend.title = element_blank(), ...) + scale_size_continuous() +
       ylab(xlab) +
       xlab(ylab)  + geom_hline(yintercept = 0, linetype=2)+scale_colour_manual(values = c("p>0.1, " = "skyblue", "p<0.1, " = "#0072B2", "p<0.05, " = "black"))
 
@@ -452,7 +463,7 @@ if(!missing(boot.plot.est) & boot == TRUE){
 
     # Adding custom text size
     if(!missing(text.size)){
-    p <- p+ theme(text = element_text(size=text.size), axis.text=element_text(size=text.size),axis.title=element_text(size=text.size), title = element_text(size=text.size))
+    p <- p+ theme(text = element_text(size=text.size), axis.text=element_text(size=text.size),axis.title=element_text(size=text.size), title = element_text(size=text.size), ...)
     }
 
     if(!missing(xlim)){
@@ -496,7 +507,7 @@ else {
       coord_flip() +
       theme_bw() + ggtitle(plot.title) +
       theme(legend.position="none") + scale_size_continuous() +
-      ylab(xlab) + scale_color_manual(values = c("blue", "red"))+theme(plot.margin = unit(c(0,1,0.2,0), "inch"))+
+      ylab(xlab) + scale_color_manual(values = c("blue", "red"))+theme(plot.margin = unit(c(0,1,0.2,0), "inch"), ...)+
       xlab(ylab)  # aspect.ratio = 0.8)
 
     # Adding plot margin
@@ -508,7 +519,7 @@ else {
 
     # Adding custom text size
     if(!missing(text.size)){
-      p <- p+ theme(text = element_text(size=text.size), axis.text=element_text(size=text.size),axis.title=element_text(size=text.size), title = element_text(size=text.size))
+      p <- p+ theme(text = element_text(size=text.size), axis.text=element_text(size=text.size),axis.title=element_text(size=text.size), title = element_text(size=text.size), ...)
     }
 
     if(!missing(xlim)){
