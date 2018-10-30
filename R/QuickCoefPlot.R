@@ -3,7 +3,7 @@
 #' QuickCoefPlot (aka qcp) is an easy interface for linear regression coefficient plots in R. This includes the option to request robust and clustered standard errors, automatic labeling, and easy selection of coefficients to plot.
 #' Written by Sondre U. Solstad (ssolstad@princeton.edu) - Please cite my github: github.com/sondreus/QuickCoefPlot.
 #'
-#' @param model Fitted "lm" object.
+#' @param model Fitted "lm" or "glm" object.
 #' @param iv.vars.names (Optional) Vector of desired independent variable names in table output (e.g. c("GDP per capita", "Population")). Defaults to values in "iv.vars" if none provided.
 #' @param plot.title (Optional) Specifies the title of the coefficient plot. Defaults to no title.
 #' @param xlim (Optional) Vector of limits on x-axis of plot. If none supplied, this is automatically selected by ggplot.
@@ -373,7 +373,6 @@ if(!missing(colors.off)){
 
 # Checking if estimates to be plotted:
 
-
 if(!missing(boot.plot.est) & boot == TRUE){
   if(boot.plot.est == TRUE){
 
@@ -392,6 +391,7 @@ if(!missing(boot.plot.est) & boot == TRUE){
     if(NCOL(se) == 1){
       se.long <- cbind.data.frame(b.est = se, vars= iv.vars.names)
       se.long <- merge(se.long, coef.plot[, c("vars", "col", "est")], by="vars")
+      se.long$b.est <- se.long$se
     } else {
 
     colnames(se) <- factor(iv.vars.names, levels = iv.vars.names[length(iv.vars.names):1])
@@ -417,7 +417,6 @@ if(!missing(boot.plot.est) & boot == TRUE){
       }
     }
 }
-
 
     require(ggplot2)
     p <- ggplot(coef.plot, aes(x=vars, y=est))+coord_fixed(ratio=1)
