@@ -353,6 +353,7 @@ if(!missing(legend.on)){
 ## Checking if only some variables to be reported
 if(!missing(include.only)){
   if(!is.null(include.only)){
+    include.only <- include.only[include.only <= nrow(coef.plot)]
     coef.plot <- coef.plot[include.only, ]
   }
 }
@@ -419,7 +420,9 @@ if(!missing(boot.plot.est) & boot == TRUE){
 }
 
     require(ggplot2)
-    p <- ggplot(coef.plot, aes(x=vars, y=est))+coord_fixed(ratio=1)
+cf <- coord_fixed(ratio = 1)
+cf$default <- TRUE
+    p <- ggplot(coef.plot, aes(x=vars, y=est))+cf
 
       # Plotting boot estimates if requested
     if(!missing(boot.plot.est)){
@@ -501,7 +504,10 @@ else {
     }
 
     require(ggplot2)
-    p <- ggplot(coef.plot, aes(x=vars, y=t, col=est))+coord_fixed(ratio=1)
+    cf <- coord_fixed(ratio = 1)
+    cf$default <- TRUE
+
+    p <- ggplot(coef.plot, aes(x=vars, y=t, col=est))+cf
     p <- p +geom_point(size=3)+
       coord_flip() +
       theme_bw() + ggtitle(plot.title) +
