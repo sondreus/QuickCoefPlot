@@ -54,7 +54,7 @@ QuickCoefPlot(model, boot.se = TRUE, boot.b = 100, boot.plot.est = TRUE, legend.
 Arguments:
 ----------
 
--   **model** - Fitted "lm" object (e.g. lm(x ~ y, data = mydata)).
+-   **model** - Fitted "lm" or "glm" object (e.g. lm(x ~ y, data = mydata)).
 -   **iv.vars.names** - *(Optional)* Vector of desired independent variable names in plot output (e.g. c("GDP per capita", "Population")). Defaults to variables names if not provided.
 -   **plot.title** *(Optional)* Specifies the title of the coefficient plot. Defaults to no title.
 -   **xlim** *(Optional)* Vector of limits on x-axis of plot. If none supplied, this is automatically selected by ggplot.
@@ -71,4 +71,5 @@ Arguments:
 -   **plot.margin** *(Optional)* Vector of plot margins in centimeters. Defaults to (1, 1, 1, 1).
 -   **text.size** *(Optional)* Text size for plot elements.
 -   **hide.summary.lines** *(Optional)* Vector of summary lines to hide in plot output. If none supplied, defaults to none.
+-   **add.summary.lines** *(Optional)* Vector of summary lines to add to plot. If none supplied, defaults to none.
 -   **horserace** *(Optional)* If TRUE produces a table comparing t-statistics instead of a coefficient plot.

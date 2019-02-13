@@ -7,11 +7,11 @@
 \usage{
 QuickCoefPlot(model, iv.vars.names, plot.title, include.only, robust.se,
   cluster, cluster.vars.names, boot.se, boot.b, boot.plot.est, plot.lines,
-  plot.margin, legend.on, colors.off, text.size, hide.summary.lines, xlim,
-  horserace)
+  plot.margin = c(0.5, 0.5, 0.5, 0.5), legend.on, colors.off, text.size,
+  add.summary.lines, hide.summary.lines, xlim, horserace, ...)
 }
 \arguments{
-\item{model}{Fitted "lm" object.}
+\item{model}{Fitted "lm" or "glm" object.}
 
 \item{iv.vars.names}{(Optional) Vector of desired independent variable names in table output (e.g. c("GDP per capita", "Population")). Defaults to values in "iv.vars" if none provided.}
 
@@ -41,11 +41,15 @@ QuickCoefPlot(model, iv.vars.names, plot.title, include.only, robust.se,
 
 \item{text.size}{(Optional) Text size for plot elements.}
 
+\item{add.summary.lines}{(Optional) Vector of summary lines to add to plot. If none supplied, defaults to none.}
+
 \item{hide.summary.lines}{(Optional) Vector of summary lines to hide in plot output. If none supplied, defaults to none.}
 
 \item{xlim}{(Optional) Vector of limits on x-axis of plot. If none supplied, this is automatically selected by ggplot.}
 
 \item{horserace}{(Optional) If TRUE Produces a table comparing t-statistics instead of a coefficient plot.}
+
+\item{...}{(Optional) arguments passed to ggplot's theme() function.}
 }
 \description{
 QuickCoefPlot (aka qcp) is an easy interface for linear regression coefficient plots in R. This includes the option to request robust and clustered standard errors, automatic labeling, and easy selection of coefficients to plot.
@@ -61,6 +65,7 @@ Please see: github.com/sondreus/QuickCoefPlot
 \keyword{LS}
 \keyword{cluster}
 \keyword{coefplot}
+\keyword{glm}
 \keyword{horse-race}
 \keyword{lm}
 \keyword{reg}
@@ -68,4 +73,3 @@ Please see: github.com/sondreus/QuickCoefPlot
 \keyword{robust}
 \keyword{robust.se}
 \keyword{tstat}
-
