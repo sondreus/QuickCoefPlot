@@ -29,7 +29,7 @@
 #' @examples
 #'
 #' QuickCoefPlot(lm(x ~y, data = mydata))
-#' qcp(lm(x ~ y, data = mydata, boot.se = TRUE, boot.plot.est = TRUE, legend.on = TRUE))
+#' qcp(lm(x ~ y), data = mydata, boot.se = TRUE, boot.plot.est = TRUE, legend.on = TRUE))
 #'
 #' Please see: github.com/sondreus/QuickCoefPlot
 
