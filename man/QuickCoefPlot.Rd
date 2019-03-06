@@ -8,7 +8,8 @@
 QuickCoefPlot(model, iv.vars.names, plot.title, include.only, robust.se,
   cluster, cluster.vars.names, boot.se, boot.b, boot.plot.est, plot.lines,
   plot.margin = c(0.5, 0.5, 0.5, 0.5), legend.on, colors.off, text.size,
-  add.summary.lines, hide.summary.lines, xlim, horserace, ...)
+  add.summary.lines, hide.summary.lines, xlim, save.summary.df, horserace,
+  ...)
 }
 \arguments{
 \item{model}{Fitted "lm" or "glm" object.}
@@ -47,6 +48,8 @@ QuickCoefPlot(model, iv.vars.names, plot.title, include.only, robust.se,
 
 \item{xlim}{(Optional) Vector of limits on x-axis of plot. If none supplied, this is automatically selected by ggplot.}
 
+\item{save.summary.df}{(Optional) Saves the coefficients and standard errors to a new data frame called "qcp.summary.df".}
+
 \item{horserace}{(Optional) If TRUE Produces a table comparing t-statistics instead of a coefficient plot.}
 
 \item{...}{(Optional) arguments passed to ggplot's theme() function.}
@@ -58,7 +61,7 @@ Written by Sondre U. Solstad (ssolstad@princeton.edu) - Please cite my github: g
 \examples{
 
 QuickCoefPlot(lm(x ~y, data = mydata))
-qcp(lm(x ~ y, data = mydata, boot.se = TRUE, boot.plot.est = TRUE, legend.on = TRUE))
+qcp(lm(x ~ y), data = mydata, boot.se = TRUE, boot.plot.est = TRUE, legend.on = TRUE))
 
 Please see: github.com/sondreus/QuickCoefPlot
 }

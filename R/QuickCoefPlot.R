@@ -21,6 +21,7 @@
 #' @param text.size (Optional) Text size for plot elements.
 #' @param hide.summary.lines (Optional) Vector of summary lines to hide in plot output. If none supplied, defaults to none.
 #' @param add.summary.lines (Optional) Vector of summary lines to add to plot. If none supplied, defaults to none.
+#' @param save.summary.df (Optional) Saves the coefficients and standard errors to a new data frame called "qcp.summary.df".
 #' @param horserace (Optional) If TRUE Produces a table comparing t-statistics instead of a coefficient plot.
 #' @param ... (Optional) arguments passed to ggplot's theme() function.
 #' @keywords lm coefplot robust.se robust cluster LS reg horse-race tstat regression glm
@@ -33,7 +34,7 @@
 #'
 #' Please see: github.com/sondreus/QuickCoefPlot
 
-QuickCoefPlot <- qcp <- function(model, iv.vars.names, plot.title, include.only, robust.se, cluster, cluster.vars.names, boot.se, boot.b, boot.plot.est, plot.lines, plot.margin = c(0.5, 0.5, 0.5, 0.5), legend.on, colors.off, text.size, add.summary.lines, hide.summary.lines, xlim, horserace, ...){
+QuickCoefPlot <- qcp <- function(model, iv.vars.names, plot.title, include.only, robust.se, cluster, cluster.vars.names, boot.se, boot.b, boot.plot.est, plot.lines, plot.margin = c(0.5, 0.5, 0.5, 0.5), legend.on, colors.off, text.size, add.summary.lines, hide.summary.lines, xlim, save.summary.df, horserace, ...){
   require(lmtest)
   require(sandwich)
 
@@ -285,6 +286,12 @@ if(robust == TRUE & cluster.se == FALSE){
 
 estimate <- as.vector(as.numeric(model$coefficients[2:dim(coeftest(model))[1]]))
 
+if(!missing(save.summary.df)){
+if(save.summary.df){
+
+  qcp.summary.df <<- data.frame(var = names(model$coefficients[2:dim(coeftest(model))[1]]), coef = estimate, se = se)
+}
+}
 
 if(t.stat == FALSE){
 
