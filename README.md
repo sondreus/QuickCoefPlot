@@ -2,10 +2,10 @@ QuickCoefPlot
 ================
 Sondre U. Solstad
 
-Easy OLS Coefficient Plots with options in R
-============================================
+Easy Coefficient Plots with options in R
+========================================
 
-QuickCoefPlot is an easy interface for linear regression coefficient plots in R. This includes the option to request robust, clustered, and bootstrapped standard errors, automatic labeling, and easy selection of coefficients to plot.
+QuickCoefPlot is an easy interface for linear and glm coefficient plots in R. This includes the option to request robust, clustered, and bootstrapped standard errors, automatic labeling, and easy selection of coefficients to plot.
 
 Written by Sondre U. Solstad, Princeton University (<ssolstad@princeton.edu>). Send me an email if you find this package useful or want to suggest an improvement or feature.
 
@@ -72,4 +72,5 @@ Arguments:
 -   **text.size** *(Optional)* Text size for plot elements.
 -   **hide.summary.lines** *(Optional)* Vector of summary lines to hide in plot output. If none supplied, defaults to none.
 -   **add.summary.lines** *(Optional)* Vector of summary lines to add to plot. If none supplied, defaults to none.
+-   **save.summary.df** *(Optional)* Saves the coefficients and standard errors to a new data frame called "qcp.summary.df".
 -   **horserace** *(Optional)* If TRUE produces a table comparing t-statistics instead of a coefficient plot.
