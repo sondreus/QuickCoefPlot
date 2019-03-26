@@ -67,3 +67,7 @@ QuickCoefPlot(model, boot.se = TRUE, boot.b = 100, boot.plot.est = TRUE, legend.
 * **add.summary.lines** *(Optional)* Vector of summary lines to add to plot. If none supplied, defaults to none.
 * **save.summary.df** *(Optional)* Saves the coefficients and standard errors to a new data frame called "qcp.summary.df".
 * **horserace** *(Optional)* If TRUE produces a table comparing t-statistics instead of a coefficient plot.
+
+## Citation:
+Solstad, Sondre Ulvund (2018). *QuickCoefPlot: Quick and Easy Coefficient Plots in R*. https://github.com/sondreus/QuickCoefPlot#quickcoefplot
+
