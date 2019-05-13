@@ -289,8 +289,17 @@ estimate <- as.vector(as.numeric(model$coefficients[2:dim(coeftest(model))[1]]))
 if(!missing(save.summary.df)){
 if(save.summary.df){
 
-  qcp.summary.df <<- data.frame(var = names(model$coefficients[2:dim(coeftest(model))[1]]), coef = estimate, se = se)
-}
+  qcp.summary.df <<- data.frame(var = names(model$coefficients[2:dim(coeftest(model))[1]]),
+                                coef = estimate,
+                                se = se,
+                                p_value = 2*pt(-abs(estimate)/se,
+                                               # intercept means we have to add 1 below
+                                               nobs(model) - (length(estimate) + 1),
+                                               lower.tail = TRUE,
+                                               log.p = FALSE))
+
+
+  }
 }
 
 if(t.stat == FALSE){
