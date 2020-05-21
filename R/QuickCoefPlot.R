@@ -58,13 +58,13 @@ if(length(grep("Zelig", class(model)[1])) > 0){
 
   # Setting variable names:
   if(missing(iv.vars.names)){
-    iv.vars.names <- rownames(coeftest(model))[2:dim(coeftest(model))[1]]
-  } else if(length(iv.vars.names) < length(rownames(coeftest(model))[2:dim(coeftest(model))[1]])){
+    iv.vars.names <- rownames(coeftest(model))[2:(length(coef(model))[1]-1)]
+  } else if(length(iv.vars.names) < length(rownames(coeftest(model))[2:(length(coef(model))[1]-1)])){
     iv.vars.names[1:length(iv.vars.names)] <- iv.vars.names
 
-    iv.vars.names[(length(iv.vars.names)+1):length(rownames(coeftest(model))[2:dim(coeftest(model))[1]])] <- rownames(coeftest(model))[(length(iv.vars.names)+2):dim(coeftest(model))[1]]
-  } else if(length(iv.vars.names) > length(rownames(coeftest(model))[2:dim(coeftest(model))[1]])){
-    iv.vars.names <- iv.vars.names[1:length(rownames(coeftest(model))[2:dim(coeftest(model))[1]])]
+    iv.vars.names[(length(iv.vars.names)+1):length(rownames(coeftest(model))[2:(length(coef(model))[1]-1)])] <- rownames(coeftest(model))[(length(iv.vars.names)+2):dim(coeftest(model))[1]]
+  } else if(length(iv.vars.names) > length(rownames(coeftest(model))[2:(length(coef(model))[1]-1)])){
+    iv.vars.names <- iv.vars.names[1:length(rownames(coeftest(model))[2:(length(coef(model))[1]-1)])]
   }
 
 
@@ -254,7 +254,8 @@ if(robust == TRUE & cluster.se == FALSE & boot == FALSE){
 if(robust == TRUE & cluster.se == FALSE){
 
       # Calculating robust standard errors
-    se <- as.vector(as.numeric(coeftest(model, vcov = sandwich)[2:dim(coeftest(model))[1], extract]))
+  library(sandwich)
+    se <- as.vector(as.numeric(coeftest(model, vcov = sandwich)[2:(length(coef(model))[1]-1), extract]))
 
 
     } else if(cluster.se == TRUE){
@@ -273,23 +274,23 @@ if(robust == TRUE & cluster.se == FALSE){
         if(length(vcov.cluster) == 0){
           return("Error: Model and clustering variables(s) must both be in accessible common data frame")
         }
-    se <- as.vector(as.numeric(coeftest(model, vcov. = vcov.cluster)[2:dim(coeftest(model))[1], extract]))
+    se <- as.vector(as.numeric(coeftest(model, vcov. = vcov.cluster)[2:(length(coef(model))[1]-1), extract]))
 
         } else {
 
       # Calculating normal standard errors
-    se <- as.vector(coef(summary(model))[2:dim(coeftest(model))[1], extract])
+    se <- as.vector(coef(summary(model))[2:(length(coef(model))[1]-1), extract])
     }
 
 
   }
 
-estimate <- as.vector(as.numeric(model$coefficients[2:dim(coeftest(model))[1]]))
+estimate <- as.vector(as.numeric(model$coefficients[2:(length(coef(model))[1]-1)]))
 
 if(!missing(save.summary.df)){
 if(save.summary.df){
 
-  qcp.summary.df <<- data.frame(var = names(model$coefficients[2:dim(coeftest(model))[1]]),
+  qcp.summary.df <<- data.frame(var = names(model$coefficients[2:(length(coef(model))[1]-1)]),
                                 coef = estimate,
                                 se = se,
                                 p_value = 2*pt(-abs(estimate)/se,
