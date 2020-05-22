@@ -265,7 +265,7 @@ if(robust == TRUE & cluster.se == FALSE){
 
       if(zelig == TRUE){
 
-       vcov.cluster <- tryCatch(cluster.vcov(model, zelig.data[complete.cases(all.vars(formula(model))), cluster]), error = function(x) {NULL})
+       vcov.cluster <- tryCatch(cluster.vcov(model, zelig.data[complete.cases(zelig.data[, all.vars(formula(model))]), cluster]), error = function(x) {NULL})
 
       } else {
         vcov.cluster <- tryCatch(cluster.vcov(model, as.formula(paste("~ ", paste(cluster, collapse = "+")))), error = function(x) {NULL})
